@@ -17,15 +17,15 @@ class SwearBot(name: String, val swearWords: Collection<String>): PircBot() {
         for (swear in swearWords) {
             if (lowerMessage.contains(swear)) {
                 score++
-                userScores.set(sender, score)
-                sendMessage(channel, "${sender} swore! score: ${score} (${swear})")
+                userScores[sender] = score
+                sendMessage(channel, "$sender swore! score: $score ($swear)")
                 return
             }
         }
 
         score--
-        userScores.set(sender, score)
-        sendMessage(channel, "${sender} didn't swear. What a fucking bastard. score: ${score}")
+        userScores[sender] = score
+        sendMessage(channel, "$sender didn't swear. What a fucking bastard. score: $score")
 
     }
 

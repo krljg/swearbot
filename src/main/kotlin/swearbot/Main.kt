@@ -10,10 +10,10 @@ fun main(args: Array<String>) {
     val server = args[1]
     val channel = args[2]
     val swearWords = readSwearWords("data/swear_words.txt")
-    println("${name} is alive!")
+    println("$name is alive!")
     val swearBot = SwearBot(name, swearWords)
     swearBot.setVerbose(true)
-    println("connecting to ${server}")
+    println("connecting to $server")
     swearBot.connect(server)
     swearBot.joinChannel(channel)
 }

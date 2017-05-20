@@ -2,6 +2,7 @@
 package swearbot
 
 import org.jibble.pircbot.PircBot
+import java.util.*
 
 class SwearBot(name: String, val swearWords: Collection<String>): PircBot() {
     val userScores = mutableMapOf<String, Int>()
@@ -25,7 +26,7 @@ class SwearBot(name: String, val swearWords: Collection<String>): PircBot() {
 
         score--
         userScores[sender] = score
-        sendMessage(channel, "$sender didn't swear. What a fucking bastard. score: $score")
+        sendMessage(channel, "$sender didn't swear. What a ${randomSwear()}ing ${randomSwear()}. score: $score")
 
     }
 
@@ -48,5 +49,10 @@ available commands are:
         var msg = ""
         userScores.forEach { user, score -> msg += "${user}: ${score}\n" }
         return msg
+    }
+
+    fun randomSwear(): String {
+        val random = Random()
+        return swearWords.elementAt(random.nextInt(swearWords.size))
     }
 }

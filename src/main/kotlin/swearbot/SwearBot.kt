@@ -11,9 +11,14 @@ class SwearBot(name: String, val swearWords: Collection<String>): PircBot() {
         this.name = name
     }
 
-    override fun onMessage(channel: String?, sender: String, login: String?, hostname: String?, message: String) {
+    override fun onMessage(channel: String, sender: String, login: String, hostname: String, message: String) {
 
         val lowerMessage = message.toLowerCase()
+
+        if (lowerMessage.startsWith(name.toLowerCase())) {
+            sendMessage(channel, parseAndExecuteCommand(lowerMessage.substring(name.length, lowerMessage.length)))
+        }
+
         var score = userScores.getOrDefault(sender, 0)
         for (swear in swearWords) {
             if (lowerMessage.contains(swear)) {
@@ -32,22 +37,25 @@ class SwearBot(name: String, val swearWords: Collection<String>): PircBot() {
 
     override fun onPrivateMessage(sender: String, login: String, hostname: String, message: String) {
         sendMessage(sender, parseAndExecuteCommand(message))
-
     }
 
     fun parseAndExecuteCommand(command: String): String {
+        println("parse and execute: '$command'")
         val parts = command.split("\\s+".toRegex())
-        when (parts[0]) {
+        println(parts)
+        when (parts[1].trim()) {
             "scores" -> return listScores()
         }
-        return """command not found
-available commands are:
-  scores"""
+        return "command not found. Availble commands: scores"
     }
 
     fun listScores(): String {
+        if(userScores.isEmpty()) {
+            return "no scores available"
+        }
+
         var msg = ""
-        userScores.forEach { user, score -> msg += "${user}: ${score}\n" }
+        userScores.forEach { user, score -> msg += "${user}:${score} " }
         return msg
     }
 

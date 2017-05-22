@@ -28,11 +28,7 @@ class SwearBot(name: String, val swearWords: Collection<String>): PircBot() {
     }
 
     override fun onMessage(channel: String, sender: String, login: String, hostname: String, message: String) {
-        if(lastSpeaker == sender) {
-            return
-        }
 
-        lastSpeaker = sender
         val lowerMessage = message.toLowerCase()
 
         if (lowerMessage.startsWith(name.toLowerCase())) {
@@ -40,27 +36,43 @@ class SwearBot(name: String, val swearWords: Collection<String>): PircBot() {
         }
 
         var score = userScores.getOrDefault(sender, 0)
-        for (swear in swearWords) {
-            if (lowerMessage.contains(swear)) {
+        if (isSwear(message)) {
+            if(lastSpeaker != sender) {
                 score++
                 userScores[sender] = score
-                sendMessage(channel, "$sender swore! score: $score ($swear)")
-                return
+                sendMessage(channel, "$sender swore! score: $score ${getSwears(message)}")
+            }
+        } else {
+            score-=10
+            userScores[sender] = score
+            if(op) {
+                kick(channel, sender, "$sender didn't swear. What a ${randomSwear()}ing ${randomSwear()}. score: $score")
+            } else {
+                sendMessage(channel, "$sender didn't swear. What a ${randomSwear()}ing ${randomSwear()}. score: $score")
             }
         }
-
-        score-=10
-        userScores[sender] = score
-        if(op) {
-            kick(channel, sender, "$sender didn't swear. What a ${randomSwear()}ing ${randomSwear()}. score: $score")
-        } else {
-            sendMessage(channel, "$sender didn't swear. What a ${randomSwear()}ing ${randomSwear()}. score: $score")
-        }
-
+        lastSpeaker = sender
     }
 
     override fun onPrivateMessage(sender: String, login: String, hostname: String, message: String) {
         sendMessage(sender, parseAndExecuteCommand(message))
+    }
+
+    fun isSwear(message: String): Boolean {
+        val lowerMessage = message.toLowerCase()
+        for (swear in swearWords) {
+            if (lowerMessage.contains(swear)) {
+                return true
+            }
+        }
+        return false
+    }
+
+    fun getSwears(message: String): Collection<String> {
+        val lowerMessage = message.toLowerCase()
+        val used = mutableListOf<String>()
+        swearWords.forEach { if(lowerMessage.contains(it)) { used.add(it) } }
+        return used
     }
 
     fun parseAndExecuteCommand(command: String): String {

@@ -6,13 +6,33 @@ import java.util.*
 
 class SwearBot(name: String, val swearWords: Collection<String>): PircBot() {
     val userScores = mutableMapOf<String, Int>()
+    var op = false
+    var lastSpeaker = ""
 
     init {
         this.name = name
     }
 
-    override fun onMessage(channel: String, sender: String, login: String, hostname: String, message: String) {
+    override fun onOp(channel: String?, sourceNick: String?, sourceLogin: String?, sourceHostname: String?, recipient: String?) {
+        super.onOp(channel, sourceNick, sourceLogin, sourceHostname, recipient)
+        if(this.name == recipient) {
+            op = true
+        }
+    }
 
+    override fun onDeop(channel: String?, sourceNick: String?, sourceLogin: String?, sourceHostname: String?, recipient: String?) {
+        super.onDeop(channel, sourceNick, sourceLogin, sourceHostname, recipient)
+        if(this.name == recipient) {
+            op = false
+        }
+    }
+
+    override fun onMessage(channel: String, sender: String, login: String, hostname: String, message: String) {
+        if(lastSpeaker == sender) {
+            return
+        }
+
+        lastSpeaker = sender
         val lowerMessage = message.toLowerCase()
 
         if (lowerMessage.startsWith(name.toLowerCase())) {
@@ -29,9 +49,13 @@ class SwearBot(name: String, val swearWords: Collection<String>): PircBot() {
             }
         }
 
-        score--
+        score-=10
         userScores[sender] = score
-        sendMessage(channel, "$sender didn't swear. What a ${randomSwear()}ing ${randomSwear()}. score: $score")
+        if(op) {
+            kick(channel, sender, "$sender didn't swear. What a ${randomSwear()}ing ${randomSwear()}. score: $score")
+        } else {
+            sendMessage(channel, "$sender didn't swear. What a ${randomSwear()}ing ${randomSwear()}. score: $score")
+        }
 
     }
 
@@ -55,7 +79,7 @@ class SwearBot(name: String, val swearWords: Collection<String>): PircBot() {
         }
 
         var msg = ""
-        userScores.forEach { user, score -> msg += "${user}:${score} " }
+        userScores.forEach { user, score -> msg += "$user:$score " }
         return msg
     }
 

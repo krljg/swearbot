@@ -13,7 +13,7 @@ class TestSwearBot: TestCase() {
     fun testCommandInChannel() {
         val name = "swearbot"
         val swearWords = setOf<String>("thing")
-        val bot = SwearBot(name, swearWords)
+        val bot = SwearBot(name, swearWords, mutableMapOf<String, Int>())
         val result = bot.parseAndExecuteCommand(", scores and what  not")
         assertEquals("no scores available", result)
     }

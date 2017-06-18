@@ -4,13 +4,15 @@ package swearbot
 import org.jibble.pircbot.PircBot
 import java.util.*
 
-class SwearBot(name: String, val swearWords: Collection<String>): PircBot() {
-    val userScores = mutableMapOf<String, Int>()
+class SwearBot(name: String, val swearWords: Collection<String>, scores: Map<String, Int>): PircBot() {
     var op = false
     var lastSpeaker = ""
+    val userScores = mutableMapOf<String, Int>()
+    @Volatile var scoresUpdated = false
 
     init {
         this.name = name
+        userScores.putAll(scores)
     }
 
     override fun onOp(channel: String?, sourceNick: String?, sourceLogin: String?, sourceHostname: String?, recipient: String?) {
@@ -27,6 +29,18 @@ class SwearBot(name: String, val swearWords: Collection<String>): PircBot() {
         }
     }
 
+    override fun onKick(channel: String?, kickerNick: String?, kickerLogin: String?, kickerHostname: String?, recipientNick: String, reason: String?) {
+        super.onKick(channel, kickerNick, kickerLogin, kickerHostname, recipientNick, reason)
+        if (recipientNick.toLowerCase().contentEquals(getNick().toLowerCase())) {
+            joinChannel(channel);
+        }
+    }
+
+    override fun onDisconnect() {
+        super.onDisconnect()
+        reconnect()
+    }
+
     override fun onMessage(channel: String, sender: String, login: String, hostname: String, message: String) {
 
         val lowerMessage = message.toLowerCase()
@@ -40,11 +54,13 @@ class SwearBot(name: String, val swearWords: Collection<String>): PircBot() {
             if(lastSpeaker != sender) {
                 score++
                 userScores[sender] = score
+                scoresUpdated = true
                 sendMessage(channel, "$sender swore! score: $score ${getSwears(message)}")
             }
         } else {
             score-=10
             userScores[sender] = score
+            scoresUpdated = true
             if(op) {
                 kick(channel, sender, "$sender didn't swear. What a ${randomSwear()}ing ${randomSwear()}. score: $score")
             } else {
@@ -98,5 +114,11 @@ class SwearBot(name: String, val swearWords: Collection<String>): PircBot() {
     fun randomSwear(): String {
         val random = Random()
         return swearWords.elementAt(random.nextInt(swearWords.size))
+    }
+
+    fun isScoresUpdated(): Boolean {
+        val tmp = scoresUpdated
+        scoresUpdated = false
+        return tmp
     }
 }

@@ -1,4 +1,5 @@
 .idea/
 lib/
 target/
+data/scores.csv
 swearbot.iml
